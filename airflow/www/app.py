@@ -37,6 +37,10 @@ def create_app(config=None, testing=False):
     app.secret_key = configuration.get('webserver', 'SECRET_KEY')
     app.config['LOGIN_DISABLED'] = not configuration.getboolean('webserver', 'AUTHENTICATE')
 
+    base_url = configuration.get('webserver', 'BASE_URL')
+    if base_url.startswith('https://'):
+        app.config['PREFERRED_URL_SCHEME'] = 'https'
+
     csrf.init_app(app)
 
     app.config['TESTING'] = testing
