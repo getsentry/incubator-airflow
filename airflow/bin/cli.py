@@ -58,11 +58,37 @@ from airflow.www.app import cached_app
 from sqlalchemy import func
 from sqlalchemy.orm import exc
 
-
 api.load_auth()
 api_module = import_module(conf.get('cli', 'api_client'))
 api_client = api_module.Client(api_base_url=conf.get('cli', 'endpoint_url'),
                                auth=api.api_auth.client_auth)
+
+
+def setup_sentry():
+    try:
+        from raven import Client
+        from raven.conf import setup_logging
+    except ImportError:
+        return None
+
+    # load Sentry (which also injects sys.except_hook)
+    client = Client()
+    # most errors in Airflow end up going through logging, so
+    # we can avoid injecting specific handlers and just re-use that
+    setup_logging(client)
+
+    try:
+        from raven.contrib.celery import register_signal, register_logger_signal
+    except ImportError:
+        pass
+    else:
+        register_logger_signal(client)
+        register_signal(client, ignore_expected=True)
+
+    return client
+
+
+sentry = setup_sentry()
 
 
 def sigint_handler(sig, frame):
