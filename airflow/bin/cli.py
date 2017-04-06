@@ -67,6 +67,7 @@ api_client = api_module.Client(api_base_url=conf.get('cli', 'endpoint_url'),
 def setup_sentry():
     try:
         from raven import Client
+        from raven.handlers.logging import SentryHandler
         from raven.conf import setup_logging
     except ImportError:
         return None
@@ -75,7 +76,7 @@ def setup_sentry():
     client = Client()
     # most errors in Airflow end up going through logging, so
     # we can avoid injecting specific handlers and just re-use that
-    setup_logging(client)
+    setup_logging(SentryHandler(client))
 
     try:
         from raven.contrib.celery import register_signal, register_logger_signal
